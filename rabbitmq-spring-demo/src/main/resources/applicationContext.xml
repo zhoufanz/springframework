@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:context="http://www.springframework.org/schema/context"
+       xmlns:rabbit="http://www.springframework.org/schema/rabbit"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans http://www.springframework.org/schema/beans/spring-beans-3.2.xsd
+       http://www.springframework.org/schema/context http://www.springframework.org/schema/context/spring-context-3.2.xsd
+       http://www.springframework.org/schema/rabbit http://www.springframework.org/schema/rabbit/spring-rabbit-1.0.xsd">
+
+    <!-- Spring configuration -->
+
+    <context:component-scan base-package="com.ndpar"/>
+    <context:mbean-export default-domain="com.ndpar.rabbitmq"/>
+
+    <!-- RabbitMQ common configuration -->
+
+    <rabbit:connection-factory id="connectionFactory" host="192.168.174.128" password="zf" username="zf"/>
+    <rabbit:template id="amqpTemplate" connection-factory="connectionFactory"/>
+    <rabbit:admin connection-factory="connectionFactory"/>
+
+    <!-- Queues -->
+
+<!--    <rabbit:queue id="zfQueue" name="zf.queue" auto-delete="false" durable="true" exclusive="false"/>
+    <rabbit:queue id="zfQueue2" name="zf.queue2" auto-delete="false" durable="true" exclusive="false"/>-->
+    <rabbit:queue id="synchronization_table" name="synchronization_table" auto-delete="false" durable="true" exclusive="false"/>
+
+    <rabbit:listener-container connection-factory="connectionFactory">
+        <rabbit:listener queues="synchronization_table" ref="messageListener"/>
+        <rabbit:listener queues="synchronization_table" ref="messageListener2"/>
+    </rabbit:listener-container>
+
+    <bean id="messageListener2" class="com.ndpar.spring.rabbitmq.MessageHandler2"/>
+    <bean id="messageListener" class="com.ndpar.spring.rabbitmq.MessageHandler"/>
+
+    <!-- Bindings -->
+    <!--定向式-->
+       <rabbit:direct-exchange name="zf.fanout">
+           <rabbit:bindings>
+               <rabbit:binding queue="synchronization_table" key="synchronization_table"></rabbit:binding>
+           </rabbit:bindings>
+       </rabbit:direct-exchange>
+    <!--分发式-->
+   <!-- <rabbit:fanout-exchange name="zf.fanout">
+        <rabbit:bindings>
+            <rabbit:binding queue="zfQueue" ></rabbit:binding>
+            <rabbit:binding queue="zfQueue2"/>
+        </rabbit:bindings>
+    </rabbit:fanout-exchange>-->
+
+    <!--通配式-->
+   <!-- <rabbit:topic-exchange name="zf.topic">
+       <rabbit:bindings>
+           <rabbit:binding queue="zfQueue" pattern="zf.topic.*"></rabbit:binding>
+           <rabbit:binding queue="zfQueue2" pattern="zf.topic.*"></rabbit:binding>
+       </rabbit:bindings>
+    </rabbit:topic-exchange>-->
+
+</beans>
